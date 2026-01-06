@@ -125,16 +125,18 @@ export default function Vaccines() {
 
   // Combine available vaccines with user reminders
   const getDisplayVaccines = () => {
-    // Deduplicate userReminders by ID - if same ID appears multiple times, keep only the latest one
+    // Deduplicate userReminders by vaccine_name + dose_number combination
+    // This prevents duplicate reminders for the same vaccine dose
     const reminderMap = new Map();
     userReminders.forEach(reminder => {
-      if (!reminderMap.has(reminder.id) || 
-          (reminderMap.get(reminder.id).updatedAt && reminder.updatedAt && 
-           new Date(reminder.updatedAt) > new Date(reminderMap.get(reminder.id).updatedAt))) {
-        reminderMap.set(reminder.id, reminder);
-      } else if (!reminderMap.get(reminder.id).updatedAt) {
+      const key = `${reminder.vaccine_name}|${reminder.dose_number || 1}`;
+      if (!reminderMap.has(key) || 
+          (reminderMap.get(key).updatedAt && reminder.updatedAt && 
+           new Date(reminder.updatedAt) > new Date(reminderMap.get(key).updatedAt))) {
+        reminderMap.set(key, reminder);
+      } else if (!reminderMap.get(key).updatedAt) {
         // If no updatedAt, use the first one
-        reminderMap.set(reminder.id, reminder);
+        reminderMap.set(key, reminder);
       }
     });
 
