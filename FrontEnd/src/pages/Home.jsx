@@ -198,19 +198,61 @@ export default function Home() {
       }
 
       try {
-        // Fetch reminders from backend
-        const remindersData = await getReminders();
-        setReminders(remindersData.map(r => ({
+        // Fetch both general reminders and vaccine reminders
+        const [remindersData, vaccineRemindersData] = await Promise.all([
+          getReminders().catch(() => []),
+          getUserVaccineReminders().catch(() => [])
+        ]);
+        
+        // Combine all reminders
+        const allRemindersList = [
+          ...remindersData,
+          ...vaccineRemindersData
+        ];
+        
+        // Filter reminders to show only today's reminders
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+        const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+        
+        const todayReminders = allRemindersList.filter(r => {
+          const reminderDate = new Date(r.reminder_date);
+          return reminderDate >= todayStart && reminderDate <= todayEnd;
+        });
+        
+        // Deduplicate reminders by title to prevent showing the same reminder twice
+        const reminderMap = new Map();
+        todayReminders.forEach(r => {
+          // Use title + date as key to identify unique reminders
+          const reminderDateTime = new Date(r.reminder_date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const key = `${r.title || r.vaccine_name}|${reminderDateTime}`;
+          
+          // Keep only one copy of each unique reminder
+          if (!reminderMap.has(key)) {
+            reminderMap.set(key, r);
+          }
+        });
+        
+        const uniqueReminders = Array.from(reminderMap.values());
+        
+        setReminders(uniqueReminders.map(r => ({
           id: r.id,
-          title: r.title,
-          description: new Date(r.reminder_date).toLocaleDateString('en-US', {
+          title: r.title || r.vaccine_name,
+          description: r.description || (r.dose_number ? `Dose ${r.dose_number} of ${r.total_doses}` : ''),
+          formattedDate: new Date(r.reminder_date).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
           }),
-          icon: r.type === 'vaccine' ? '💉' : '📅'
+          icon: (r.type === 'vaccine' || r.vaccine_name) ? '💉' : '📅'
         })));
       } catch (error) {
         console.error('Error fetching reminders:', error);
