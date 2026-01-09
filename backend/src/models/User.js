@@ -14,7 +14,7 @@ const User = sequelize.define('User', {
   },
   hashed_password: {
     type: DataTypes.STRING(255),
-    allowNull: false,
+    allowNull: true,
   },
   full_name: {
     type: DataTypes.STRING(255),
@@ -29,6 +29,18 @@ const User = sequelize.define('User', {
   },
   baby_date_of_birth: {
     type: DataTypes.STRING(10),
+    allowNull: true,
+  },
+  provider: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+  },
+  provider_id: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  picture_url: {
+    type: DataTypes.STRING(512),
     allowNull: true,
   },
   created_at: {
