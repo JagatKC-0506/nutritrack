@@ -11,7 +11,7 @@ import {
  */
 export const register = async (req, res, next) => {
   try {
-    const { email, password, full_name, due_date, user_type, baby_date_of_birth } = req.body;
+    const { email, password, full_name, due_date, user_type } = req.body;
 
     // Validate password strength
     const passwordValidation = validatePasswordStrength(password);
@@ -36,7 +36,6 @@ export const register = async (req, res, next) => {
       full_name,
       due_date,
       user_type,
-      baby_date_of_birth,
     });
 
     return res.status(201).json({ msg: 'User created' });
@@ -94,7 +93,6 @@ export const getCurrentUser = async (req, res, next) => {
       full_name: user.full_name,
       due_date: user.due_date,
       user_type: user.user_type,
-      baby_date_of_birth: user.baby_date_of_birth,
       created_at: user.created_at,
       updated_at: user.updated_at,
     });

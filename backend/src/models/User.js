@@ -27,10 +27,6 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('pregnant', 'newParent', 'trying'),
     allowNull: true,
   },
-  baby_date_of_birth: {
-    type: DataTypes.STRING(10),
-    allowNull: true,
-  },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,

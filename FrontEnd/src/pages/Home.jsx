@@ -15,7 +15,7 @@ import NotificationBanner from '../components/NotificationBanner';
 import TipCard from '../components/TipCard';
 import BottomNavigation from '../components/BottomNavigation';
 import NotificationService from '../services/NotificationService';
-import { getReminders, getDailyTip, getCurrentUser, getAuthToken, getUserVaccineReminders } from '../api';
+import { getReminders, getDailyTip, getCurrentUser, getAuthToken, getUserVaccineReminders, getBabies } from '../api';
 import { isVaccineDueWithin } from '../utils/vaccineSchedule';
 import '../styles/Home.css';
 import '../styles/NotificationCard.css';
@@ -169,18 +169,39 @@ export default function Home() {
         localStorage.setItem('userType', userType);
 
         const { trimester, weeksPregnant } = calculateTrimester(user.due_date);
-        const babyAge = calculateBabyAge(user.baby_date_of_birth);
+        
+        let babyAgeLabel = 'Age unknown';
+        let babyAgeMonths = null;
+        let babyAgeWeeks = null;
+        let babyDob = null;
+
+        // If user is newParent, fetch baby data and calculate age
+        if (userType === 'newParent') {
+          try {
+            const babiesData = await getBabies().catch(() => []);
+            if (babiesData && babiesData.length > 0) {
+              const activeBaby = babiesData.find(b => b.is_active) || babiesData[0];
+              babyDob = activeBaby.date_of_birth;
+              const babyAge = calculateBabyAge(babyDob);
+              babyAgeLabel = babyAge.label;
+              babyAgeMonths = babyAge.monthsValue;
+              babyAgeWeeks = babyAge.weeks;
+            }
+          } catch (error) {
+            console.error('Error fetching baby data:', error);
+          }
+        }
 
         setUserData({
           userName: user.full_name || "User",
-          trimester: userType === 'pregnant' ? trimester : babyAge.label,
-          dueDate: userType === 'pregnant' ? user.due_date : user.baby_date_of_birth,
+          trimester: userType === 'pregnant' ? trimester : babyAgeLabel,
+          dueDate: user.due_date,
           weeksPregnant: userType === 'pregnant' ? weeksPregnant : null,
           userType,
-          babyAgeLabel: babyAge.label,
-          babyAgeMonths: babyAge.monthsValue,
-          babyAgeWeeks: babyAge.weeks,
-          babyDob: user.baby_date_of_birth
+          babyAgeLabel: babyAgeLabel,
+          babyAgeMonths: babyAgeMonths,
+          babyAgeWeeks: babyAgeWeeks,
+          babyDob: babyDob
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
